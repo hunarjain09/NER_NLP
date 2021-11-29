@@ -1,0 +1,36 @@
+1	Hunar	O
+2	,	O
+3	Jain	O
+4	Devisha	O
+
+1	Precipitation	O
+2	using	O
+3	GST	B
+4	fusion	O
+5	proteins	O
+6	containing	O
+7	Fyn	B
+8	SH2	I
+9	,	O
+10	SH3	B
+11	,	O
+12	and	O
+13	SH2	B
+14	/	O
+15	SH3	B
+16	domains	I
+17	revealed	O
+18	that	O
+19	PI	B
+20	3	I
+21	kinase	I
+22	bound	O
+23	principally	O
+24	to	O
+25	the	O
+26	SH3	B
+27	domain	I
+28	of	O
+29	Fyn	B
+30	.	O
+

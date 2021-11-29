@@ -1,0 +1,37 @@
+
+1	Hunar	
+2	,	
+3	Jain	
+4	Devisha	
+
+1	Precipitation
+2	using
+3	GST
+4	fusion
+5	proteins
+6	containing
+7	Fyn
+8	SH2
+9	,
+10	SH3
+11	,
+12	and
+13	SH2
+14	/
+15	SH3
+16	domains
+17	revealed
+18	that
+19	PI
+20	3
+21	-	I
+22	kinase
+23	bound
+24	principally
+25	to
+26	the
+27	SH3
+28	domain
+29	of
+30	Fyn
+31	.
