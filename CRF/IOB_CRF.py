@@ -150,7 +150,7 @@ class Dataset(namedtuple("_Dataset", "sentences keys vocab X tagset Y training_s
     def __iter__(self):
         return iter(self.sentences.items())
 
-data = Dataset("tags-universal.txt", "S21-gene-train.txt", train_test_split=1.0)
+data = Dataset("tags-universal.txt", "S21-gene-train.txt", train_test_split=0.8)
 
 classes = list(data.tagset)
 
@@ -167,6 +167,43 @@ def iscamelcase(string):
                     return True
     return False
 
+i_words = []
+b_words = []
+o_words = []
+
+for i, pair in enumerate(data.stream()):
+    if pair[1] == 'I':
+        i_words.append(pair[0])
+    elif pair[1] == 'B':
+        b_words.append(pair[0])
+    else:
+        o_words.append(pair[0])
+
+i_counter = Counter(i_words)
+b_counter = Counter(b_words)
+o_counter = Counter(o_words)
+
+i_mostCommon = i_counter.most_common(20)
+b_mostCommon = b_counter.most_common(20)
+o_mostCommon = o_counter.most_common(20)
+
+def setReturn(tag_mostCommon):
+    tag_set = set()
+    for pair in tag_mostCommon:
+        tag_set.add(pair[0])
+    return tag_set
+
+def uniqueToTag(setA, setB, setC):
+    return setA - setB - setC
+
+i_set = setReturn(i_mostCommon)
+b_set = setReturn(b_mostCommon)
+o_set = setReturn(o_mostCommon)
+
+i_unique_set = i_set - b_set - o_set
+b_unique_set = b_set - o_set - i_set
+o_unique_set = o_set - i_set - b_set
+
 def word2features(sent, i):
     word = sent[i][0]    
     features = {
@@ -180,23 +217,20 @@ def word2features(sent, i):
         'word.isStopword()': word in stop_words,
         'word.isalnum()': word.isalnum(),
         'word.endWithASE()': word.lower().endswith('ase'),
-        'word.endWithIN()': word.lower().endswith('in'),
+        'word.endWithIN()': word.lower().endswith('ein'),
+        'word.endWithENE()': word.lower().endswith('ene'),
         'word.logWordLength': np.log(len(word)),
         'word.isCamelCase': iscamelcase(word),
+        'word.inIUnique':word in i_unique_set,
+        'word.inOUnique':word in o_unique_set,
+        'word.inBUnique':word in b_unique_set
     }
     if i > 0:
         word1 = sent[i-1][0]
         features.update({
             '-1:word.lower()': word1.lower(),
             '-1:word.istitle()': word1.istitle(),
-            '-1:word.isupper()': word1.isupper(),
-            '-1:word.isStopword()': word1 in stop_words,
-            '-1:word.isalnum()': word1.isalnum(),
-            '-1:word.endWithASE()': word1.lower().endswith('ase'),
-            '-1:word.endWithIN()': word1.lower().endswith('in'),
-            '-1:word.logWordLength': np.log(len(word1)),
-            'isPreviousWordDash()': True if word1 == '-' else False,
-            'isPreviousBracket()': True if word1 in ['(','['] else False
+            '-1:word.isupper()': word1.isupper()
         })
     else:
         features['BOS'] = True
@@ -205,15 +239,7 @@ def word2features(sent, i):
         features.update({
             '+1:word.lower()': word1.lower(),
             '+1:word.istitle()': word1.istitle(),
-            '+1:word.isupper()': word1.isupper(),
-            '+1:word.isStopword()': word1 in stop_words,
-            '+1:word.isalnum()': word1.isalnum(),
-            '+1:word.endWithASE()': word1.lower().endswith('ase'),
-            '+1:word.endWithIN()': word1.lower().endswith('in'),
-            '+1:word.logWordLength': np.log(len(word1)),
-            'isNextWordDash()': True if word1 == '-' else False,
-            'isNextBracket()': True if word1 in [')',']'] else False
-
+            '+1:word.isupper()': word1.isupper()
         })
     else:
         features['EOS'] = True
@@ -260,22 +286,20 @@ y_train = [sent2labels(s) for s in getMeSentences(data.sentences)]
 
 crf = sklearn_crfsuite.CRF(
     algorithm='lbfgs',
-    c1=0.11318281407993107,
-    c2=0.1251936657764397,
-    max_iterations=100,
+    c1=0.1,
+    c2=0.1,
+    max_iterations=1000,
     all_possible_transitions=True
 )
 crf.fit(X_train, y_train)
 
 test_data = TestDataset("tags-universal.txt", "F21-gene-test.txt")
 
-print(len(test_data.sentences))
-
 X_testFinal = [sent2features(s) for s in getMeTestSentences(test_data.sentences)]
 
 y_predTestFinal = crf.predict(X_testFinal)
 
-with open('final_output_submission.txt', 'w') as f:
+with open('output-submission-answer.txt', 'w') as f:
     k = 0
     for key in test_data.sentences:
         for i,val in enumerate(zip(test_data.sentences[key].words,y_predTestFinal[k])):
